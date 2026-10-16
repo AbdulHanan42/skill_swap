@@ -1,0 +1,73 @@
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.enums import MatchStatus, SessionStatus
+from app.schemas.user_schema import UserResponse
+
+
+class MatchSuggestion(BaseModel):
+    user: UserResponse
+    match_score: float
+    overlapping_offers: list[str] = []
+    overlapping_wants: list[str] = []
+
+
+class MatchResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_a_id: int
+    user_b_id: int
+    status: MatchStatus
+    match_score: Optional[float] = None
+    matched_at: datetime
+
+
+class SessionCreate(BaseModel):
+    match_id: int
+    scheduled_for: datetime
+    meeting_link: Optional[str] = None
+
+
+class SessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    match_id: int
+    scheduled_for: datetime
+    meeting_link: Optional[str] = None
+    status: SessionStatus
+
+
+class InterviewGenerateRequest(BaseModel):
+    skill_id: Optional[int] = None
+    type: str = "MCQ"
+    question_count: int = Field(default=5, ge=1, le=10)
+
+
+class InterviewSubmitRequest(BaseModel):
+    skill_id: int
+    type: str = "MCQ"
+    answers: list[dict]
+
+
+class InterviewResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    skill_id: int
+    type: str
+    score: Optional[float] = None
+    ai_feedback: Optional[str] = None
+    taken_at: datetime
+
+
+class ProgressResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    badge_name: Optional[str] = None
+    completed_swaps: int = 0
+    total_points: int = 0
