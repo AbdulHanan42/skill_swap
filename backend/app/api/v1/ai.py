@@ -8,7 +8,7 @@ from app.models.gamification import AIInterview
 from app.models.skill import Skill
 from app.models.user import User
 from app.schemas.match_schema import InterviewGenerateRequest, InterviewResponse, InterviewSubmitRequest
-from app.services.ai_service import evaluate_answers, generate_interview, learning_suggestions
+from app.services.ai_service import AIProviderError, evaluate_answers, generate_interview, learning_suggestions
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -22,7 +22,10 @@ def generate_ai_interview(
         interview_type = InterviewType(payload.type)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid interview type") from exc
-    return generate_interview(current_user, interview_type, payload.question_count)
+    try:
+        return generate_interview(current_user, interview_type, payload.question_count)
+    except AIProviderError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
 
 
 @router.post("/interview/submit", response_model=InterviewResponse)
@@ -63,4 +66,7 @@ def ai_suggestions(
         db.scalars(select(AIInterview.score).where(AIInterview.user_id == current_user.id)).all()
     )
     numeric_scores = [score for score in scores if score is not None]
-    return learning_suggestions(current_user, numeric_scores)
+    try:
+        return learning_suggestions(current_user, numeric_scores)
+    except AIProviderError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc

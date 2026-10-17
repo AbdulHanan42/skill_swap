@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173"
 
     OPENAI_API_KEY: SecretStr = SecretStr("")
+    OPENAI_MODEL: str = "gpt-4.1-mini"
     GEMINI_API_KEY: SecretStr = SecretStr("")
 
     @computed_field
