@@ -58,7 +58,7 @@ class UserResponse(BaseModel):
     bio: Optional[str] = None
     designation: Optional[str] = None
     created_at: datetime
-    skills: List[UserSkillResponse] = []
+    skills: List[UserSkillResponse] = Field(default_factory=list)
 
 
 class DashboardOverview(BaseModel):

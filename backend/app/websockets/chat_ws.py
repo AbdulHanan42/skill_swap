@@ -8,6 +8,7 @@ from app.models.chat import Message
 from app.models.enums import MatchStatus
 from app.models.match import Match
 from app.models.user import User
+from app.schemas.chat_schema import MessageCreate
 from app.services.chat_manager import chat_manager
 
 router = APIRouter()
@@ -47,8 +48,13 @@ async def chat_websocket(websocket: WebSocket, match_id: int, db: Session = Depe
     try:
         while True:
             payload = await websocket.receive_json()
-            content = str(payload.get("content", "")).strip()
+            try:
+                content = MessageCreate.model_validate(payload).content.strip()
+            except (ValueError, TypeError):
+                await websocket.send_json({"error": "Message content must be between 1 and 4000 characters."})
+                continue
             if not content:
+                await websocket.send_json({"error": "Message content cannot be blank."})
                 continue
             message = Message(match_id=match_id, sender_id=user.id, content=content)
             db.add(message)

@@ -5,6 +5,9 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.core.config import settings
 from app.db.base import Base
+from app.models.gamification import ProgressTracking  # noqa: F401
+from app.models.match import LearningSession, Match  # noqa: F401
+from app.models.chat import Message  # noqa: F401
 from app.models import Skill, User, UserSkill  # noqa: F401
 
 config = context.config

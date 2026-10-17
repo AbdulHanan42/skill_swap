@@ -19,6 +19,11 @@ app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat_ws_router)
 
 
+@app.get("/")
+def read_root() -> dict[str, str]:
+    return {"status": "success", "message": "Skill Swap Backend is running!"}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
