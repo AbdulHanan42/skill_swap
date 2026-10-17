@@ -25,8 +25,8 @@ class AIInterview(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    user: Mapped["User"] = relationship(back_populates="interviews")
-    skill: Mapped["Skill"] = relationship(back_populates="interviews")
+    user: Mapped["User"] = relationship()
+    skill: Mapped["Skill"] = relationship()
 
 
 class ProgressTracking(Base):
@@ -38,4 +38,4 @@ class ProgressTracking(Base):
     completed_swaps: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    user: Mapped["User"] = relationship(back_populates="progress")
+    user: Mapped["User"] = relationship()

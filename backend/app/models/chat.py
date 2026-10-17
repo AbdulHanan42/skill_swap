@@ -23,4 +23,4 @@ class Message(Base):
     )
 
     match: Mapped["Match"] = relationship(back_populates="messages")
-    sender: Mapped["User"] = relationship(back_populates="sent_messages")
+    sender: Mapped["User"] = relationship()

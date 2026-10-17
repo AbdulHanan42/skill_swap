@@ -6,7 +6,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.gamification import AIInterview
     from app.models.user import UserSkill
 
 
@@ -18,4 +17,3 @@ class Skill(Base):
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     user_skills: Mapped[List["UserSkill"]] = relationship(back_populates="skill")
-    interviews: Mapped[List["AIInterview"]] = relationship(back_populates="skill")

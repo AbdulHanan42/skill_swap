@@ -27,8 +27,8 @@ class Match(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    user_a: Mapped["User"] = relationship(back_populates="matches_as_a", foreign_keys=[user_a_id])
-    user_b: Mapped["User"] = relationship(back_populates="matches_as_b", foreign_keys=[user_b_id])
+    user_a: Mapped["User"] = relationship(foreign_keys=[user_a_id])
+    user_b: Mapped["User"] = relationship(foreign_keys=[user_b_id])
     messages: Mapped[List["Message"]] = relationship(back_populates="match", cascade="all, delete-orphan")
     learning_sessions: Mapped[List["LearningSession"]] = relationship(
         back_populates="match", cascade="all, delete-orphan"
