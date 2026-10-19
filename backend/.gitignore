@@ -23,9 +23,11 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.cache/
 .coverage
 .coverage.*
 htmlcov/
+coverage/
 .tox/
 .nox/
 
@@ -42,6 +44,16 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# JavaScript tooling and browser test output, if used under backend
+node_modules/
+*.tsbuildinfo
+.eslintcache
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+__screenshots__/
 
 # Alembic / local runtime
 *.db
