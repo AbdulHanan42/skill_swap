@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,16 +15,18 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, nullable=False
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    bio: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
-    designation: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    bio: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    designation: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    skills: Mapped[List["UserSkill"]] = relationship(
+    skills: Mapped[list["UserSkill"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
@@ -32,7 +34,9 @@ class User(Base):
 class UserSkill(Base):
     __tablename__ = "user_skills"
     __table_args__ = (
-        UniqueConstraint("user_id", "skill_id", "skill_type", name="uq_user_skill_type"),
+        UniqueConstraint(
+            "user_id", "skill_id", "skill_type", name="uq_user_skill_type"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -43,7 +47,11 @@ class UserSkill(Base):
         ForeignKey("skills.id", ondelete="CASCADE"), index=True, nullable=False
     )
     skill_type: Mapped[SkillType] = mapped_column(
-        Enum(SkillType, name="skill_type", values_callable=lambda items: [item.value for item in items]),
+        Enum(
+            SkillType,
+            name="skill_type",
+            values_callable=lambda items: [item.value for item in items],
+        ),
         nullable=False,
     )
     proficiency: Mapped[Proficiency] = mapped_column(

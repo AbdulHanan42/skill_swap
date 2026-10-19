@@ -60,7 +60,10 @@ def add_skills(
     if isinstance(payload, UserSkillAdd):
         skill_name = payload.skill_name.strip()
         if not skill_name:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Skill name cannot be empty")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Skill name cannot be empty",
+            )
 
         skill = db.scalar(select(Skill).where(Skill.name == skill_name))
         if skill is None:
@@ -77,7 +80,10 @@ def add_skills(
         )
         if existing:
             db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Skill already added to your profile")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Skill already added to your profile",
+            )
 
         user_skill = UserSkill(
             user_id=current_user.id,
@@ -90,7 +96,10 @@ def add_skills(
             db.commit()
         except IntegrityError as exc:
             db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Skill already added to your profile") from exc
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Skill already added to your profile",
+            ) from exc
         db.refresh(user_skill)
         response.status_code = status.HTTP_201_CREATED
         return AddedSkillResult(message="Skill added successfully", skill=user_skill)
@@ -98,11 +107,21 @@ def add_skills(
     skill_ids = [item.skill_id for item in payload.skills]
     selections = [(item.skill_id, item.skill_type) for item in payload.skills]
     if len(selections) != len(set(selections)):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Duplicate skill selections")
-    found_ids = set(db.scalars(select(Skill.id).where(Skill.id.in_(skill_ids))).all()) if skill_ids else set()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Duplicate skill selections",
+        )
+    found_ids = (
+        set(db.scalars(select(Skill.id).where(Skill.id.in_(skill_ids))).all())
+        if skill_ids
+        else set()
+    )
     missing_ids = set(skill_ids) - found_ids
     if missing_ids:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Skills not found: {sorted(missing_ids)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Skills not found: {sorted(missing_ids)}",
+        )
 
     created: list[UserSkill] = []
     for item in payload.skills:
@@ -133,14 +152,20 @@ def dashboard_overview(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DashboardOverview:
-    active_matches = db.scalar(
-        select(func.count())
-        .select_from(Match)
-        .where(
-            Match.status == MatchStatus.ACCEPTED,
-            or_(Match.user_a_id == current_user.id, Match.user_b_id == current_user.id),
+    active_matches = (
+        db.scalar(
+            select(func.count())
+            .select_from(Match)
+            .where(
+                Match.status == MatchStatus.ACCEPTED,
+                or_(
+                    Match.user_a_id == current_user.id,
+                    Match.user_b_id == current_user.id,
+                ),
+            )
         )
-    ) or 0
+        or 0
+    )
     return DashboardOverview(
         profile_completeness=_profile_completeness(current_user),
         active_matches=active_matches,

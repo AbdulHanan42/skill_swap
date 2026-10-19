@@ -1,11 +1,9 @@
-from typing import Dict, Set
-
 from fastapi import WebSocket
 
 
 class ChatConnectionManager:
     def __init__(self) -> None:
-        self.active_connections: Dict[int, Set[WebSocket]] = {}
+        self.active_connections: dict[int, set[WebSocket]] = {}
 
     async def connect(self, match_id: int, websocket: WebSocket) -> None:
         await websocket.accept()

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,7 +13,9 @@ class Skill(Base):
     __tablename__ = "skills"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
-    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    name: Mapped[str] = mapped_column(
+        String(100), unique=True, index=True, nullable=False
+    )
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    user_skills: Mapped[List["UserSkill"]] = relationship(back_populates="skill")
+    user_skills: Mapped[list["UserSkill"]] = relationship(back_populates="skill")

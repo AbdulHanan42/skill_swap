@@ -29,7 +29,9 @@ def _get_match_or_404(db: Session, match_id: int, user: User) -> Match:
         select(Match).options(selectinload(Match.messages)).where(Match.id == match_id)
     )
     if match is None or user.id not in {match.user_a_id, match.user_b_id}:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Match not found"
+        )
     return match
 
 
@@ -50,25 +52,35 @@ def match_suggestions(
     ]
 
 
-@router.post("/matches/request/{target_user_id}", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/matches/request/{target_user_id}",
+    response_model=MatchResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def request_match(
     target_user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Match:
     if target_user_id == current_user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot match with yourself")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot match with yourself"
+        )
 
     target = db.get(User, target_user_id)
     if target is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     user_a_id, user_b_id = _ordered_pair(current_user.id, target_user_id)
     existing = db.scalar(
         select(Match).where(Match.user_a_id == user_a_id, Match.user_b_id == user_b_id)
     )
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Match already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Match already exists"
+        )
 
     score, _, _ = calculate_match_score(current_user, target)
     match = Match(
@@ -118,7 +130,11 @@ def chat_history(
     )
 
 
-@router.post("/sessions/schedule", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sessions/schedule",
+    response_model=SessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def schedule_session(
     payload: SessionCreate,
     db: Session = Depends(get_db),
@@ -126,7 +142,9 @@ def schedule_session(
 ) -> LearningSession:
     match = _get_match_or_404(db, payload.match_id, current_user)
     if match.status != MatchStatus.ACCEPTED:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Match must be accepted")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Match must be accepted"
+        )
 
     session = LearningSession(
         match_id=match.id,
@@ -143,9 +161,13 @@ def schedule_session(
 def _complete_progress(user_id: int) -> None:
     db = SessionLocal()
     try:
-        progress = db.scalar(select(ProgressTracking).where(ProgressTracking.user_id == user_id))
+        progress = db.scalar(
+            select(ProgressTracking).where(ProgressTracking.user_id == user_id)
+        )
         if progress is None:
-            progress = ProgressTracking(user_id=user_id, completed_swaps=0, total_points=0)
+            progress = ProgressTracking(
+                user_id=user_id, completed_swaps=0, total_points=0
+            )
             db.add(progress)
         progress.completed_swaps += 1
         progress.total_points += 10
@@ -165,7 +187,9 @@ def complete_session(
 ) -> LearningSession:
     session = db.get(LearningSession, session_id)
     if session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
     _get_match_or_404(db, session.match_id, current_user)
     session.status = SessionStatus.COMPLETED
     db.add(session)

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -21,14 +20,14 @@ class MatchResponse(BaseModel):
     user_a_id: int
     user_b_id: int
     status: MatchStatus
-    match_score: Optional[float] = None
+    match_score: float | None = None
     matched_at: datetime
 
 
 class SessionCreate(BaseModel):
     match_id: int
     scheduled_for: datetime
-    meeting_link: Optional[str] = None
+    meeting_link: str | None = None
 
 
 class SessionResponse(BaseModel):
@@ -37,20 +36,29 @@ class SessionResponse(BaseModel):
     id: int
     match_id: int
     scheduled_for: datetime
-    meeting_link: Optional[str] = None
+    meeting_link: str | None = None
     status: SessionStatus
 
 
 class InterviewGenerateRequest(BaseModel):
-    skill_id: Optional[int] = None
+    skill_id: int | None = None
+    skill_name: str | None = Field(default=None, min_length=1, max_length=100)
     type: str = "MCQ"
-    question_count: int = Field(default=5, ge=1, le=10)
+    proficiency: str = "Beginner"
+    question_count: int = Field(default=3, ge=1, le=10)
+
+
+class InterviewAnswer(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    answer: str = Field(min_length=1, max_length=4000)
 
 
 class InterviewSubmitRequest(BaseModel):
-    skill_id: int
+    skill_id: int | None = None
+    skill_name: str | None = Field(default=None, min_length=1, max_length=100)
     type: str = "MCQ"
-    answers: list[dict]
+    answers: list[InterviewAnswer] = Field(default_factory=list)
+    qa_pairs: list[InterviewAnswer] = Field(default_factory=list)
 
 
 class InterviewResponse(BaseModel):
@@ -60,14 +68,17 @@ class InterviewResponse(BaseModel):
     user_id: int
     skill_id: int
     type: str
-    score: Optional[float] = None
-    ai_feedback: Optional[str] = None
+    score: float | None = None
+    ai_feedback: str | None = None
     taken_at: datetime
 
 
 class ProgressResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    badge_name: Optional[str] = None
+    user_name: str
+    badge: str
+    total_skills_listed: int
+    successful_swaps: int
+    ai_interview_average: float
+    badge_name: str | None = None
     completed_swaps: int = 0
     total_points: int = 0
