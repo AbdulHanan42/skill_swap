@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -29,7 +31,9 @@ def _authenticate_socket(websocket: WebSocket, db: Session) -> User | None:
 
 
 @router.websocket("/ws/chat/{match_id}")
-async def chat_websocket(websocket: WebSocket, match_id: int, db: Session = Depends(get_db)) -> None:
+async def chat_websocket(
+    websocket: WebSocket, match_id: int, db: Session = Depends(get_db)
+) -> None:
     user = _authenticate_socket(websocket, db)
     if user is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
@@ -47,11 +51,21 @@ async def chat_websocket(websocket: WebSocket, match_id: int, db: Session = Depe
     await chat_manager.connect(match_id, websocket)
     try:
         while True:
-            payload = await websocket.receive_json()
+            raw_message = await websocket.receive_text()
+            try:
+                decoded = json.loads(raw_message)
+                payload = (
+                    decoded if isinstance(decoded, dict) else {"content": raw_message}
+                )
+            except json.JSONDecodeError:
+                payload = {"content": raw_message}
+
             try:
                 content = MessageCreate.model_validate(payload).content.strip()
             except (ValueError, TypeError):
-                await websocket.send_json({"error": "Message content must be between 1 and 4000 characters."})
+                await websocket.send_json(
+                    {"error": "Message content must be between 1 and 4000 characters."}
+                )
                 continue
             if not content:
                 await websocket.send_json({"error": "Message content cannot be blank."})

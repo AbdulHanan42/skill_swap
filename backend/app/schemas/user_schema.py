@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -10,8 +9,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     full_name: str
-    bio: Optional[str] = None
-    designation: Optional[str] = None
+    bio: str | None = None
+    designation: str | None = None
 
 
 class UserLogin(BaseModel):
@@ -25,9 +24,9 @@ class Token(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
-    bio: Optional[str] = None
-    designation: Optional[str] = None
+    full_name: str | None = None
+    bio: str | None = None
+    designation: str | None = None
 
 
 class UserSkillCreate(BaseModel):
@@ -37,7 +36,7 @@ class UserSkillCreate(BaseModel):
 
 
 class UserSkillBulkCreate(BaseModel):
-    skills: List[UserSkillCreate]
+    skills: list[UserSkillCreate]
 
 
 class UserSkillResponse(BaseModel):
@@ -55,10 +54,10 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     full_name: str
-    bio: Optional[str] = None
-    designation: Optional[str] = None
+    bio: str | None = None
+    designation: str | None = None
     created_at: datetime
-    skills: List[UserSkillResponse] = Field(default_factory=list)
+    skills: list[UserSkillResponse] = Field(default_factory=list)
 
 
 class DashboardOverview(BaseModel):
