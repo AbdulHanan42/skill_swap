@@ -56,7 +56,7 @@ def find_suggestions(db: Session, current_user: User, limit: int = 20) -> list[d
     for candidate in users:
         score, a_gets, b_gets = calculate_match_score(current, candidate)
         if score <= 0:
-            # A candidate  still be useful when they offer a skill the
+            # A candidate can still be useful when they offer a skill the
             # current user wants, even if the exchange is not reciprocal yet.
             wanted = _skill_ids(current, SkillType.WANTS)
             offered = _skill_ids(candidate, SkillType.OFFERS)
