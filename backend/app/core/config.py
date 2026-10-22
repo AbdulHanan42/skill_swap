@@ -27,12 +27,16 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173"
 
     OPENAI_API_KEY: SecretStr = SecretStr("")
+    OPENAI_MODEL: str = "gpt-4.1-mini"
     GEMINI_API_KEY: SecretStr = SecretStr("")
+    GEMINI_MODEL: str = "gemini-3.8-flash"
 
     @computed_field
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
+        ]
 
 
 @lru_cache

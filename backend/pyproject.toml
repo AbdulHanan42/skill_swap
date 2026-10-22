@@ -1,0 +1,6 @@
+[tool.isort]
+profile = "black"
+
+[tool.ruff.lint]
+# FastAPI dependencies are intentionally declared with Depends() defaults.
+ignore = ["B008"]
