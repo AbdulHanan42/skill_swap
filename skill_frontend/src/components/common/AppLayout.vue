@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useTheme } from '@/composables/useTheme'
@@ -16,11 +16,17 @@ const navItems = [
   { label: 'Skill Matching', icon: 'swap', to: { name: 'skill-matching' } },
   { label: 'Chat Room', icon: 'chat' },
   { label: 'AI Interview', icon: 'gear' },
-  { label: 'Progress Tracking', icon: 'chart' },
+  { label: 'Progress Tracking', icon: 'chart', to: { name: 'progress-tracking' } },
 ]
 
 const firstName = computed(() => auth.user?.full_name?.split(' ')[0] ?? 'there')
 const userInitial = computed(() => (auth.user?.full_name ?? 'U').trim().charAt(0).toUpperCase())
+
+onMounted(() => {
+  if (!auth.user) {
+    auth.loadProfile().catch(() => auth.logout())
+  }
+})
 
 function handleLogout() {
   auth.logout()
