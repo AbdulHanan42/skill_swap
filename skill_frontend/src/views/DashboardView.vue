@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 const auth = useAuthStore()
 const router = useRouter()
 
-/* ---------- theme ---------- */
+/* -- theme -- */
 
 const isDarkMode = ref(localStorage.getItem('skillswap_theme') === 'dark')
 
@@ -42,7 +42,7 @@ const wants = computed(() =>
 
 const userInitial = computed(() => (auth.user?.full_name ?? 'U').trim().charAt(0).toUpperCase())
 
-/* ---------- static widget data (backend integration pending) ---------- */
+/* ---- static widget data (backend integration pending) ----*/
 
 const navItems = [
   { label: 'Dashboard', icon: 'grid', active: true },
@@ -90,7 +90,7 @@ const chartPath = computed(() => {
     .join(' ')
 })
 
-/* ---------- actions ---------- */
+/* -- actions  */
 
 function goAuth() {
   auth.logout()
