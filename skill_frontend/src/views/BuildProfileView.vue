@@ -3,8 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { extractApiError } from '@/api/client'
-import { addSkill, getDashboardOverview, listSkillCatalog, updateProfile } from '@/api/profileApi'
+import { addSkill as postSkill, getDashboardOverview, listSkillCatalog, updateProfile } from '@/api/profileApi'
 import AppLayout from '@/components/common/AppLayout.vue'
+import SkillTag from '@/components/common/SkillTag.vue'
+import AddSkillForm from '@/components/profile/AddSkillForm.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
@@ -21,7 +23,6 @@ const avatarInput = ref(null)
 
 const skills = ref([]) // { id, skill_id, skill_type, proficiency, name }
 
-const newSkillName = ref('')
 const newSkillType = ref('OFFERS')
 const newSkillProficiency = ref('Beginner')
 
@@ -53,6 +54,7 @@ onMounted(async () => {
     fullName.value = profile.full_name ?? ''
     designation.value = profile.designation ?? ''
     bio.value = profile.bio ?? ''
+    avatarUrl.value = profile.avatar ?? ''
     skills.value = (profile.skills ?? []).map((s) => ({
       ...s,
       name: nameById[s.skill_id] ?? `Skill #${s.skill_id}`,
@@ -77,36 +79,41 @@ function pickAvatar() {
 function onAvatarChange(event) {
   const file = event.target.files?.[0]
   if (!file) return
-  if (avatarUrl.value) URL.revokeObjectURL(avatarUrl.value)
-  avatarUrl.value = URL.createObjectURL(file)
+  if (file.size > 1_500_000) {
+    error.value = 'Avatar image must be under 1.5 MB.'
+    event.target.value = ''
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    avatarUrl.value = reader.result
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
 }
 
 /* ---------- skills ---------- */
 
-async function submitSkill(name) {
+async function addSkillToPortfolio(skillName, skillType = null, proficiency = null) {
   if (isAdding.value) return
   error.value = ''
   notice.value = ''
-  const skillName = (name ?? newSkillName.value).trim()
-  if (!skillName) {
+  const name = skillName.trim()
+  if (!name) {
     error.value = 'Enter a skill name first.'
     return
   }
   isAdding.value = true
   try {
-    const result = await addSkill({
-      skillName,
+    const result = await postSkill({
+      skillName: name,
       category: null,
-      skillType: newSkillType.value,
-      proficiency: newSkillProficiency.value,
+      skillType: skillType ?? newSkillType.value,
+      proficiency: proficiency ?? newSkillProficiency.value,
     })
     const added = result.skill ?? result
-    skills.value.push({
-      ...added,
-      name: skillName,
-    })
-    if (!name) newSkillName.value = ''
-    notice.value = `"${skillName}" added to your portfolio.`
+    skills.value.push({ ...added, name })
+    notice.value = `"${name}" added to your portfolio.`
   } catch (err) {
     error.value = extractApiError(err)
   } finally {
@@ -130,6 +137,7 @@ async function saveAndContinue() {
       fullName: fullName.value.trim() || undefined,
       designation: designation.value.trim(),
       bio: bio.value.trim(),
+      avatar: avatarUrl.value || null,
     })
     auth.user = updated
     router.push({ name: 'dashboard' })
@@ -237,44 +245,24 @@ function previewProfile() {
 
         <p class="mt-4 text-xs font-semibold">What I Teach (Offers)</p>
         <div class="mt-2 flex flex-wrap gap-2">
-          <span v-for="(skill, i) in offers" :key="`offer-${skill.id}-${i}`" class="flex items-center gap-1.5 rounded-lg bg-[var(--success-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--success-text)]">
-            {{ skill.name }}
-            <button type="button" class="opacity-60 transition hover:opacity-100" title="Remove" @click="removeSkill(skills.indexOf(skill))">&times;</button>
-          </span>
+          <SkillTag v-for="(skill, i) in offers" :key="`offer-${skill.id}-${i}`" :label="skill.name" variant="offer" size="md" removable @remove="removeSkill(skills.indexOf(skill))" />
           <span v-if="!offers.length" class="text-xs italic text-[var(--text-secondary)]">No offers yet — add a skill you can teach.</span>
         </div>
 
         <p class="mt-4 text-xs font-semibold">What I Want (Wants)</p>
         <div class="mt-2 flex flex-wrap gap-2">
-          <span v-for="(skill, i) in wants" :key="`want-${skill.id}-${i}`" class="flex items-center gap-1.5 rounded-lg bg-[var(--warning-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--warning-text)]">
-            {{ skill.name }}
-            <button type="button" class="opacity-60 transition hover:opacity-100" title="Remove" @click="removeSkill(skills.indexOf(skill))">&times;</button>
-          </span>
+          <SkillTag v-for="(skill, i) in wants" :key="`want-${skill.id}-${i}`" :label="skill.name" variant="want" size="md" removable @remove="removeSkill(skills.indexOf(skill))" />
           <span v-if="!wants.length" class="text-xs italic text-[var(--text-secondary)]">No wants yet — add a skill you want to learn.</span>
         </div>
 
         <!-- add skill row -->
-        <div class="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
-          <input v-model="newSkillName" type="text" placeholder="Skill name (e.g. Vue.js)"
-            class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--accent-primary)]"
-            @keyup.enter="submitSkill()" />
-          <select v-model="newSkillType" class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--accent-primary)]">
-            <option value="OFFERS">Offers</option>
-            <option value="WANTS">Wants</option>
-          </select>
-          <select v-model="newSkillProficiency" class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--accent-primary)]">
-            <option v-for="level in experienceLevels" :key="level" :value="level">{{ level }}</option>
-          </select>
-          <button type="button" :disabled="isAdding" class="rounded-lg bg-[var(--accent-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60" @click="submitSkill()">
-            {{ isAdding ? 'Adding…' : '+ Add' }}
-          </button>
-        </div>
+        <AddSkillForm :is-adding="isAdding" :initial-proficiency="newSkillProficiency" :levels="experienceLevels" @add="addSkillToPortfolio($event.skillName, $event.skillType, $event.proficiency)" />
 
         <p class="mt-5 text-xs font-semibold text-[var(--text-secondary)]">Suggestions</p>
         <div class="mt-2 flex flex-wrap gap-2">
           <button v-for="s in suggestions" :key="s" type="button" :disabled="isAdding || skills.some((x) => x.name.toLowerCase() === s.toLowerCase() && x.skill_type === newSkillType)"
             class="rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] disabled:cursor-not-allowed disabled:opacity-40"
-            @click="submitSkill(s)">
+            @click="addSkillToPortfolio(s)">
             + {{ s }}
           </button>
         </div>
