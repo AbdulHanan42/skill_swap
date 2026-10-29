@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -150,6 +152,7 @@ def schedule_session(
         match_id=match.id,
         scheduled_for=payload.scheduled_for,
         meeting_link=payload.meeting_link,
+        duration_minutes=payload.duration_minutes,
         status=SessionStatus.SCHEDULED,
     )
     db.add(session)
@@ -191,9 +194,13 @@ def complete_session(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
     _get_match_or_404(db, session.match_id, current_user)
-    session.status = SessionStatus.COMPLETED
+    already_completed = session.status == SessionStatus.COMPLETED
+    if not already_completed:
+        session.status = SessionStatus.COMPLETED
+        session.completed_at = datetime.now(timezone.utc)
     db.add(session)
     db.commit()
     db.refresh(session)
-    background_tasks.add_task(_complete_progress, current_user.id)
+    if not already_completed:
+        background_tasks.add_task(_complete_progress, current_user.id)
     return session
