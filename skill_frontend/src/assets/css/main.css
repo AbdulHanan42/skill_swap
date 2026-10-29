@@ -15,6 +15,15 @@
     --success-text: #166534;    /* Dark green text */
     --warning-bg: #fef9c3;      /* Light yellow */
     --warning-text: #854d0e;    /* Dark yellow text */
+    --danger-bg: #fee2e2;       /* Light red */
+    --danger-border: #fca5a5;   /* Soft red border */
+    --danger-text: #dc2626;     /* Strong red text */
+
+    --chart-1: #10b981;         /* Progress series: emerald */
+    --chart-2: #3b82f6;         /* Progress series: blue */
+    --chart-3: #8b5cf6;         /* Progress series: violet */
+    --chart-4: #14b8a6;         /* Progress series: teal */
+    --chart-5: #f59e0b;         /* Progress series: amber */
   }
 
   /* Dark Theme Variables */
@@ -31,5 +40,14 @@
     --success-text: #34d399;
     --warning-bg: #713f12;
     --warning-text: #fde047;
+    --danger-bg: #450a0a;
+    --danger-border: #7f1d1d;
+    --danger-text: #fca5a5;
+
+    --chart-1: #34d399;
+    --chart-2: #60a5fa;
+    --chart-3: #a78bfa;
+    --chart-4: #2dd4bf;
+    --chart-5: #fbbf24;
   }
 }

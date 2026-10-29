@@ -1,7 +1,16 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -29,6 +38,9 @@ class Match(Base):
         nullable=False,
     )
     match_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    requested_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
     matched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -54,6 +66,12 @@ class LearningSession(Base):
         DateTime(timezone=True), nullable=False
     )
     meeting_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    duration_minutes: Mapped[int] = mapped_column(
+        Integer, default=60, server_default="60", nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     status: Mapped[SessionStatus] = mapped_column(
         Enum(SessionStatus, name="session_status"),
         default=SessionStatus.SCHEDULED,

@@ -21,6 +21,7 @@ class MatchResponse(BaseModel):
     user_b_id: int
     status: MatchStatus
     match_score: float | None = None
+    requested_by_id: int | None = None
     matched_at: datetime
 
 
@@ -28,6 +29,7 @@ class SessionCreate(BaseModel):
     match_id: int
     scheduled_for: datetime
     meeting_link: str | None = None
+    duration_minutes: int = Field(default=60, ge=5, le=480)
 
 
 class SessionResponse(BaseModel):
@@ -37,6 +39,8 @@ class SessionResponse(BaseModel):
     match_id: int
     scheduled_for: datetime
     meeting_link: str | None = None
+    duration_minutes: int
+    completed_at: datetime | None = None
     status: SessionStatus
 
 
@@ -82,3 +86,51 @@ class ProgressResponse(BaseModel):
     badge_name: str | None = None
     completed_swaps: int = 0
     total_points: int = 0
+
+
+class ActivityPoint(BaseModel):
+    date: str
+    label: str
+    hours: float
+
+
+class SkillMasteryItem(BaseModel):
+    skill_name: str
+    proficiency: str
+    percent: int
+    verified: bool
+
+
+class BadgeItem(BaseModel):
+    key: str
+    name: str
+    description: str
+    unlocked: bool
+    progress: float
+
+
+class CompletedSessionItem(BaseModel):
+    id: int
+    subject: str
+    peer_name: str
+    completed_at: datetime
+    hours: float
+
+
+class ProgressDashboard(BaseModel):
+    user_name: str
+    badge: str
+    swap_hours: float
+    swap_hours_delta: float | None = None
+    skill_twins: int
+    active_streak_days: int
+    ai_interview_average: float
+    ai_interview_count: int
+    ai_grade: str
+    total_skills_listed: int
+    successful_swaps: int
+    completed_sessions_total: int
+    weekly_activity: list[ActivityPoint]
+    skill_mastery: list[SkillMasteryItem]
+    badges: list[BadgeItem]
+    completed_sessions: list[CompletedSessionItem]

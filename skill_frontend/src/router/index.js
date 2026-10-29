@@ -30,6 +30,12 @@ const router = createRouter({
       component: () => import('@/views/SkillMatchingView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/progress',
+      name: 'progress-tracking',
+      component: () => import('@/views/ProgressTrackingView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
