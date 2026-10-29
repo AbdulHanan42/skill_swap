@@ -32,3 +32,11 @@ export function addSkill({ skillName, category, skillType, proficiency }) {
 export function getDashboardOverview() {
   return request('/dashboard/overview')
 }
+
+export function fetchMatchSuggestions() {
+  return request('/matches/suggestions')
+}
+
+export function requestSwap(targetUserId) {
+  return request(`/matches/request/${targetUserId}`, { method: 'POST' })
+}

@@ -13,7 +13,7 @@ const { isDarkMode, toggleTheme } = useTheme()
 const navItems = [
   { label: 'Dashboard', icon: 'grid', to: { name: 'dashboard' } },
   { label: 'Build Profile', icon: 'user', to: { name: 'build-profile' } },
-  { label: 'Skill Matching', icon: 'swap' },
+  { label: 'Skill Matching', icon: 'swap', to: { name: 'skill-matching' } },
   { label: 'Chat Room', icon: 'chat' },
   { label: 'AI Interview', icon: 'gear' },
   { label: 'Progress Tracking', icon: 'chart' },
