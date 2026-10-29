@@ -4,8 +4,7 @@ import SwapButton from '@/components/common/SwapButton.vue'
 
 defineProps({
   match: { type: Object, default: null }, // { name, designation, avatar, bio, score, offers[], wants[] }
-  sent: { type: Boolean, default: false },
-  pending: { type: Boolean, default: false },
+  state: { type: String, default: 'available' },
 })
 
 defineEmits(['close', 'request-swap'])
@@ -36,7 +35,7 @@ defineEmits(['close', 'request-swap'])
           <SkillTag v-for="skill in match.wants" :key="skill" :label="skill" variant="want" />
           <span v-if="!match.wants.length" class="text-[11px] italic text-[var(--text-secondary)]">No wants listed</span>
         </div>
-        <SwapButton class="mt-6 w-full" size="md" :sent="sent" :pending="pending" @click="$emit('request-swap')" />
+        <SwapButton class="mt-6 w-full" size="md" :state="state" @click="$emit('request-swap')" />
       </div>
     </div>
   </Transition>

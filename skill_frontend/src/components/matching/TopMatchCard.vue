@@ -5,8 +5,7 @@ import SwapButton from '@/components/common/SwapButton.vue'
 
 defineProps({
   match: { type: Object, required: true }, // { user_id, name, designation, avatar, score, offers[], wants[] }
-  sent: { type: Boolean, default: false },
-  pending: { type: Boolean, default: false },
+  state: { type: String, default: 'available' },
 })
 
 defineEmits(['request-swap', 'view-profile'])
@@ -41,7 +40,7 @@ defineEmits(['request-swap', 'view-profile'])
       <ScoreRing :score="match.score" :size="80" />
       <div class="flex shrink-0 gap-2">
         <button type="button" class="rounded-lg border border-[var(--border-color)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-base)]" @click="$emit('view-profile')">View Profile</button>
-        <SwapButton size="md" emoji :sent="sent" :pending="pending" @click="$emit('request-swap')" />
+        <SwapButton size="md" emoji :state="state" @click="$emit('request-swap')" />
       </div>
     </div>
   </section>

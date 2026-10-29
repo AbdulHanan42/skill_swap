@@ -75,3 +75,8 @@ export function extractApiError(error) {
   }
   return error?.message || 'Network error. Is the backend running?'
 }
+
+export function websocketUrl(path) {
+  const { protocol, host } = new URL(BASE_URL)
+  return `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws${path}`
+}

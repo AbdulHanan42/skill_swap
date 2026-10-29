@@ -11,6 +11,23 @@ class MatchSuggestion(BaseModel):
     match_score: float
     overlapping_offers: list[str] = []
     overlapping_wants: list[str] = []
+    # available | requested_by_me | requested_by_them | connected
+    request_state: str = "available"
+
+
+class SwapRequestItem(BaseModel):
+    match_id: int
+    status: MatchStatus
+    match_score: float | None = None
+    requested_at: datetime
+    is_mine: bool
+    peer_id: int
+    peer_name: str
+    peer_designation: str | None = None
+    peer_bio: str | None = None
+    peer_avatar: str | None = None
+    offers: list[str] = Field(default_factory=list)
+    wants: list[str] = Field(default_factory=list)
 
 
 class MatchResponse(BaseModel):
