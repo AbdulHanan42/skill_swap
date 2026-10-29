@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 
 import { listSkillCatalog } from '@/api/profileApi'
 import AppLayout from '@/components/common/AppLayout.vue'
+import SkillTag from '@/components/common/SkillTag.vue'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
@@ -93,7 +94,8 @@ onMounted(async () => {
       <section class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 shadow-sm">
         <h2 class="mb-4 text-sm font-bold">Welcome Banner <span class="font-normal text-[var(--text-secondary)]">(Summary Card)</span></h2>
         <div class="flex items-center gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--accent-primary)] text-lg font-bold text-white">{{ userInitial }}</div>
+          <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Your avatar" class="h-12 w-12 shrink-0 rounded-full object-cover" />
+          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--accent-primary)] text-lg font-bold text-white">{{ userInitial }}</div>
           <div class="min-w-0">
             <p class="truncate text-sm font-semibold">{{ auth.user?.full_name ?? '—' }} <span class="font-normal text-[var(--text-secondary)]">({{ auth.user?.designation || 'Full Stack dev' }})</span> • Level 4</p>
             <div class="mt-1 flex flex-wrap gap-1.5">
@@ -173,12 +175,12 @@ onMounted(async () => {
         <h2 class="text-sm font-bold">Profile &amp; Skills <span class="font-normal text-[var(--text-secondary)]">(My Skill Portfolio)</span></h2>
         <p class="mt-4 text-xs font-semibold">What I Teach (Offers):</p>
         <div class="mt-2 flex flex-wrap gap-2">
-          <span v-for="skill in offers" :key="skill" class="rounded-lg bg-[var(--success-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--success-text)]">{{ skill }}</span>
+          <SkillTag v-for="skill in offers" :key="skill" :label="skill" variant="offer" size="md" />
           <span v-if="!offers.length" class="text-xs italic text-[var(--text-secondary)]">No offers yet</span>
         </div>
         <p class="mt-4 text-xs font-semibold">What I Want (Wants):</p>
         <div class="mt-2 flex flex-wrap gap-2">
-          <span v-for="skill in wants" :key="skill" class="rounded-lg bg-[var(--warning-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--warning-text)]">{{ skill }}</span>
+          <SkillTag v-for="skill in wants" :key="skill" :label="skill" variant="want" size="md" />
           <span v-if="!wants.length" class="text-xs italic text-[var(--text-secondary)]">No wants yet</span>
           <RouterLink :to="{ name: 'build-profile' }" class="rounded-lg border border-dashed border-[var(--accent-primary)] px-2.5 py-1 text-xs font-semibold text-[var(--accent-primary)] transition hover:bg-[var(--accent-primary)]/10">+ Add Skill</RouterLink>
         </div>

@@ -13,7 +13,7 @@ const { isDarkMode, toggleTheme } = useTheme()
 const navItems = [
   { label: 'Dashboard', icon: 'grid', to: { name: 'dashboard' } },
   { label: 'Build Profile', icon: 'user', to: { name: 'build-profile' } },
-  { label: 'Skill Matching', icon: 'swap' },
+  { label: 'Skill Matching', icon: 'swap', to: { name: 'skill-matching' } },
   { label: 'Chat Room', icon: 'chat' },
   { label: 'AI Interview', icon: 'gear' },
   { label: 'Progress Tracking', icon: 'chart' },
@@ -104,7 +104,8 @@ function handleLogout() {
             </button>
 
             <div class="flex items-center gap-2">
-              <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-primary)] text-sm font-bold text-white">{{ userInitial }}</div>
+              <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Your avatar" class="h-9 w-9 shrink-0 rounded-full object-cover" />
+              <div v-else class="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-primary)] text-sm font-bold text-white">{{ userInitial }}</div>
               <span class="hidden text-sm font-semibold sm:block">Hello, {{ firstName }}!</span>
               <svg class="h-4 w-4 text-[var(--text-secondary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>

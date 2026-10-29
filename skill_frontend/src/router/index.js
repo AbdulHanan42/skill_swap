@@ -24,6 +24,12 @@ const router = createRouter({
       component: () => import('@/views/BuildProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/matching',
+      name: 'skill-matching',
+      component: () => import('@/views/SkillMatchingView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
