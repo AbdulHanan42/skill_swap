@@ -53,6 +53,7 @@ onMounted(async () => {
     fullName.value = profile.full_name ?? ''
     designation.value = profile.designation ?? ''
     bio.value = profile.bio ?? ''
+    avatarUrl.value = profile.avatar ?? ''
     skills.value = (profile.skills ?? []).map((s) => ({
       ...s,
       name: nameById[s.skill_id] ?? `Skill #${s.skill_id}`,
@@ -77,8 +78,17 @@ function pickAvatar() {
 function onAvatarChange(event) {
   const file = event.target.files?.[0]
   if (!file) return
-  if (avatarUrl.value) URL.revokeObjectURL(avatarUrl.value)
-  avatarUrl.value = URL.createObjectURL(file)
+  if (file.size > 1_500_000) {
+    error.value = 'Avatar image must be under 1.5 MB.'
+    event.target.value = ''
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    avatarUrl.value = reader.result
+  }
+  reader.readAsDataURL(file)
+  event.target.value = ''
 }
 
 /* ---------- skills ---------- */
@@ -130,6 +140,7 @@ async function saveAndContinue() {
       fullName: fullName.value.trim() || undefined,
       designation: designation.value.trim(),
       bio: bio.value.trim(),
+      avatar: avatarUrl.value || null,
     })
     auth.user = updated
     router.push({ name: 'dashboard' })

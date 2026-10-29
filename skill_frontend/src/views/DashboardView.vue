@@ -93,7 +93,8 @@ onMounted(async () => {
       <section class="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-5 shadow-sm">
         <h2 class="mb-4 text-sm font-bold">Welcome Banner <span class="font-normal text-[var(--text-secondary)]">(Summary Card)</span></h2>
         <div class="flex items-center gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--accent-primary)] text-lg font-bold text-white">{{ userInitial }}</div>
+          <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Your avatar" class="h-12 w-12 shrink-0 rounded-full object-cover" />
+          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--accent-primary)] text-lg font-bold text-white">{{ userInitial }}</div>
           <div class="min-w-0">
             <p class="truncate text-sm font-semibold">{{ auth.user?.full_name ?? '—' }} <span class="font-normal text-[var(--text-secondary)]">({{ auth.user?.designation || 'Full Stack dev' }})</span> • Level 4</p>
             <div class="mt-1 flex flex-wrap gap-1.5">

@@ -21,10 +21,10 @@ router = APIRouter(tags=["profile"])
 
 
 def _profile_completeness(user: User) -> float:
-    fields = [user.full_name, user.bio, user.designation, user.email]
+    fields = [user.full_name, user.bio, user.designation, user.email, user.avatar]
     filled = sum(1 for field in fields if field)
     skill_bonus = 1 if user.skills else 0
-    return round(((filled + skill_bonus) / 5) * 100, 2)
+    return round(((filled + skill_bonus) / 6) * 100, 2)
 
 
 @router.get("/profile/me", response_model=UserResponse)
