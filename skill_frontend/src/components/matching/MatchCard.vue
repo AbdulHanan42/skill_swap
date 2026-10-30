@@ -4,8 +4,7 @@ import SwapButton from '@/components/common/SwapButton.vue'
 
 defineProps({
   match: { type: Object, required: true }, // { user_id, name, designation, avatar, score, offers[], wants[] }
-  sent: { type: Boolean, default: false },
-  pending: { type: Boolean, default: false },
+  state: { type: String, default: 'available' },
 })
 
 defineEmits(['request-swap', 'view-profile'])
@@ -34,7 +33,7 @@ defineEmits(['request-swap', 'view-profile'])
     </div>
     <div class="mt-auto grid grid-cols-2 gap-2 pt-5">
       <button type="button" class="rounded-lg border border-[var(--border-color)] px-3 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[var(--bg-base)]" @click="$emit('view-profile')">View Profile</button>
-      <SwapButton size="sm" :sent="sent" :pending="pending" @click="$emit('request-swap')" />
+      <SwapButton size="sm" :state="state" @click="$emit('request-swap')" />
     </div>
   </div>
 </template>
