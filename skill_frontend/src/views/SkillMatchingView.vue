@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { extractApiError } from '@/api/client'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -10,10 +11,12 @@ import MatchFilterBar from '@/components/matching/MatchFilterBar.vue'
 import MatchProfileModal from '@/components/matching/MatchProfileModal.vue'
 import TopMatchCard from '@/components/matching/TopMatchCard.vue'
 import { useSwapRequests } from '@/composables/useSwapRequests'
-import { fetchMatchSuggestions, listSkillCatalog } from '@/api/profileApi'
+import { fetchMatchSuggestions } from '@/api/matchApi'
+import { listSkillCatalog } from '@/api/profileApi'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
+const router = useRouter()
 
 /* ---------- state ---------- */
 
@@ -25,7 +28,9 @@ const search = ref('')
 const sortMode = ref('highest')
 const levelFilter = ref('all')
 
-const { sentIds, pendingIds, toast, error, request } = useSwapRequests()
+let stateTimer = null
+
+const { pendingIds, toast, error, request } = useSwapRequests()
 
 /* ---------- load ---------- */
 
@@ -45,6 +50,7 @@ async function loadMatches() {
       avatar: item.user.avatar || '',
       bio: item.user.bio || '',
       score: Math.round(item.match_score),
+      request_state: item.request_state,
       offers: item.user.skills
         .filter((s) => s.skill_type === 'OFFERS')
         .map((s) => nameById[s.skill_id] ?? `Skill #${s.skill_id}`),
@@ -60,12 +66,53 @@ async function loadMatches() {
   }
 }
 
+async function refreshStates() {
+  // The peer may have answered while this page stayed open, so re-read the
+  // server-side state without flashing the full-page skeleton.
+  if (isLoading.value || document.hidden) return
+  try {
+    const suggestions = await fetchMatchSuggestions()
+    const stateById = Object.fromEntries(suggestions.map((item) => [item.user.id, item.request_state]))
+    for (const match of matches.value) {
+      const next = stateById[match.user_id]
+      if (next) match.request_state = next
+    }
+  } catch {
+    /* keep the last known state */
+  }
+}
+
 onMounted(async () => {
   if (!auth.user) {
     await auth.loadProfile().catch(() => {})
   }
   loadMatches()
+  stateTimer = setInterval(refreshStates, 20000)
+  document.addEventListener('visibilitychange', refreshStates)
 })
+
+onUnmounted(() => {
+  clearInterval(stateTimer)
+  document.removeEventListener('visibilitychange', refreshStates)
+})
+
+/* ---------- swap requests ---------- */
+
+function stateOf(match) {
+  if (!match) return 'available'
+  if (pendingIds.value.has(match.user_id)) return 'sending'
+  return match.request_state || 'available'
+}
+
+async function sendRequest(match) {
+  if (!match) return
+  if (match.request_state === 'requested_by_them') {
+    router.push({ name: 'swap-requests' })
+    return
+  }
+  const state = await request(match.user_id, match.name)
+  if (state) match.request_state = state
+}
 
 /* ---------- filtering ---------- */
 
@@ -113,7 +160,7 @@ const viewing = computed(() => matches.value.find((m) => m.user_id === viewingId
       <div class="mt-4 space-y-2">
         <ToastMessage v-if="toast" :message="toast" @dismiss="toast = ''" />
         <ToastMessage v-if="error" :message="error" type="error" @dismiss="error = ''" />
-        <p v-if="loadError" class="rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-600">{{ loadError }}</p>
+        <p v-if="loadError" class="rounded-lg border border-[var(--danger-border)] bg-[var(--danger-bg)] px-4 py-2.5 text-xs font-semibold text-[var(--danger-text)]">{{ loadError }}</p>
       </div>
 
       <!-- Filter bar -->
@@ -150,9 +197,8 @@ const viewing = computed(() => matches.value.find((m) => m.user_id === viewingId
         <!-- Featured top AI match -->
         <TopMatchCard
           :match="topMatch"
-          :sent="sentIds.has(topMatch.user_id)"
-          :pending="pendingIds.has(topMatch.user_id)"
-          @request-swap="request(topMatch.user_id, topMatch.name)"
+          :state="stateOf(topMatch)"
+          @request-swap="sendRequest(topMatch)"
           @view-profile="viewingId = topMatch.user_id"
         />
 
@@ -164,9 +210,8 @@ const viewing = computed(() => matches.value.find((m) => m.user_id === viewingId
               v-for="m in otherMatches"
               :key="m.user_id"
               :match="m"
-              :sent="sentIds.has(m.user_id)"
-              :pending="pendingIds.has(m.user_id)"
-              @request-swap="request(m.user_id, m.name)"
+              :state="stateOf(m)"
+              @request-swap="sendRequest(m)"
               @view-profile="viewingId = m.user_id"
             />
           </div>
@@ -177,10 +222,9 @@ const viewing = computed(() => matches.value.find((m) => m.user_id === viewingId
     <!-- Profile modal -->
     <MatchProfileModal
       :match="viewing"
-      :sent="viewing ? sentIds.has(viewing.user_id) : false"
-      :pending="viewing ? pendingIds.has(viewing.user_id) : false"
+      :state="stateOf(viewing)"
       @close="viewingId = null"
-      @request-swap="request(viewing.user_id, viewing.name); viewingId = null"
+      @request-swap="sendRequest(viewing)"
     />
   </AppLayout>
 </template>
