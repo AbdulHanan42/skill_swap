@@ -24,6 +24,30 @@ const router = createRouter({
       component: () => import('@/views/BuildProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/matching',
+      name: 'skill-matching',
+      component: () => import('@/views/SkillMatchingView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/requests',
+      name: 'swap-requests',
+      component: () => import('@/views/SwapRequestsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/chat/:matchId?',
+      name: 'chat-room',
+      component: () => import('@/views/ChatRoomView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/progress',
+      name: 'progress-tracking',
+      component: () => import('@/views/ProgressTrackingView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

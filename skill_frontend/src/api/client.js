@@ -33,29 +33,15 @@ function formatDetail(detail) {
   return null
 }
 
-export async function request(path, { method = 'GET', body, form } = {}) {
-  const headers = {}
-  if (getToken()) {
-    headers.Authorization = `Bearer ${getToken()}`
-  }
-  const options = { method, headers }
-  if (form) {
-    options.body = new URLSearchParams(form).toString()
-    headers['Content-Type'] = 'application/x-www-form-urlencoded'
-  } else if (body !== undefined) {
-    options.body = JSON.stringify(body)
-    headers['Content-Type'] = 'application/json'
-  }
-
+async function send(path, options) {
   let response
   try {
     response = await fetch(`${BASE_URL}${path}`, options)
   } catch {
     throw new ApiError(0, 'Network error. Is the backend running?')
   }
-
-  const data = response.status === 204 ? null : await response.json().catch(() => null)
   if (!response.ok) {
+    const data = response.status === 204 ? null : await response.json().catch(() => null)
     // A 401 while a token is attached means the session expired — a 401 with no
     // token is just a failed login attempt and must stay on the form.
     if (response.status === 401 && getToken()) {
@@ -66,12 +52,47 @@ export async function request(path, { method = 'GET', body, form } = {}) {
     }
     throw new ApiError(response.status, data?.detail)
   }
-  return data
+  return response
 }
+
+function authHeaders(withoutContentType) {
+  const headers = {}
+  if (getToken()) {
+    headers.Authorization = `Bearer ${getToken()}`
+  }
+  if (!withoutContentType) headers['Content-Type'] = 'application/json'
+  return headers
+}
+
+export async function request(path, { method = 'GET', body, form, formData } = {}) {
+  const options = { method, headers: authHeaders(Boolean(formData)) }
+  if (formData) {
+    // The browser sets the multipart boundary itself, so no Content-Type here.
+    options.body = formData
+  } else if (form) {
+    options.body = new URLSearchParams(form).toString()
+    options.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+  } else if (body !== undefined) {
+    options.body = JSON.stringify(body)
+  }
+  const response = await send(path, options)
+  return response.status === 204 ? null : response.json()
+}
+
+export async function requestBlob(path) {
+  const response = await send(path, { method: 'GET', headers: authHeaders(true) })
+  return response.blob()
+}
+
 
 export function extractApiError(error) {
   if (error instanceof ApiError) {
     return error.message
   }
   return error?.message || 'Network error. Is the backend running?'
+}
+
+export function websocketUrl(path) {
+  const { protocol, host } = new URL(BASE_URL)
+  return `${protocol === 'https:' ? 'wss:' : 'ws:'}//${host}/ws${path}`
 }

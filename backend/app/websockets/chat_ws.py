@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
@@ -12,6 +13,7 @@ from app.models.match import Match
 from app.models.user import User
 from app.schemas.chat_schema import MessageCreate
 from app.services.chat_manager import chat_manager
+from app.services.chat_payload import message_payload
 
 router = APIRouter()
 
@@ -48,7 +50,8 @@ async def chat_websocket(
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    await chat_manager.connect(match_id, websocket)
+    await chat_manager.connect(match_id, websocket, user.id)
+    peer_id = match.user_b_id if match.user_a_id == user.id else match.user_a_id
     try:
         while True:
             raw_message = await websocket.receive_text()
@@ -74,15 +77,12 @@ async def chat_websocket(
             db.add(message)
             db.commit()
             db.refresh(message)
-            await chat_manager.broadcast(
-                match_id,
-                {
-                    "id": message.id,
-                    "match_id": message.match_id,
-                    "sender_id": message.sender_id,
-                    "content": message.content,
-                    "sent_at": message.sent_at.isoformat(),
-                },
-            )
+            if peer_id in chat_manager.online_user_ids(match_id):
+                # The recipient is sitting in this room, so the message is read
+                # the moment it lands — no badge should flash for it.
+                message.read_at = datetime.now(timezone.utc)
+                db.commit()
+                db.refresh(message)
+            await chat_manager.broadcast(match_id, message_payload(message))
     except WebSocketDisconnect:
         chat_manager.disconnect(match_id, websocket)

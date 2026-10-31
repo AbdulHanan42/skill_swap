@@ -8,11 +8,12 @@ export function fetchProfile() {
   return request('/profile/me')
 }
 
-export function updateProfile({ fullName, bio, designation }) {
+export function updateProfile({ fullName, bio, designation, avatar }) {
   const body = {}
   if (fullName !== undefined) body.full_name = fullName
   if (bio !== undefined) body.bio = bio
   if (designation !== undefined) body.designation = designation
+  if (avatar !== undefined) body.avatar = avatar
   return request('/profile/me', { method: 'PUT', body })
 }
 

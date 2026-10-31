@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.enums import Proficiency, SkillType
 
@@ -27,6 +27,14 @@ class UserUpdate(BaseModel):
     full_name: str | None = None
     bio: str | None = None
     designation: str | None = None
+    avatar: str | None = None
+
+    @field_validator("avatar")
+    @classmethod
+    def _avatar_size(cls, value: str | None) -> str | None:
+        if value and len(value) > 2_000_000:
+            raise ValueError("Avatar image is too large (max ~1.5 MB)")
+        return value
 
 
 class UserSkillCreate(BaseModel):
@@ -56,6 +64,7 @@ class UserResponse(BaseModel):
     full_name: str
     bio: str | None = None
     designation: str | None = None
+    avatar: str | None = None
     created_at: datetime
     skills: list[UserSkillResponse] = Field(default_factory=list)
 
