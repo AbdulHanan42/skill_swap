@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_MB: int = 5
+    INTERVIEW_MAX_UPLOAD_MB: int = 10
 
     @property
     def upload_root(self) -> Path:
@@ -41,6 +42,10 @@ class Settings(BaseSettings):
     @property
     def max_upload_bytes(self) -> int:
         return self.MAX_UPLOAD_MB * 1024 * 1024
+
+    @property
+    def interview_max_upload_bytes(self) -> int:
+        return self.INTERVIEW_MAX_UPLOAD_MB * 1024 * 1024
 
 
     @computed_field
