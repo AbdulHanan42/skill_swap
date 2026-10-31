@@ -18,6 +18,19 @@ def _has_ai_provider() -> bool:
     )
 
 
+def provider_configured() -> bool:
+    """True when a live model can generate or grade questions."""
+    return _has_ai_provider()
+
+
+def provider_name() -> str:
+    if settings.GEMINI_API_KEY.get_secret_value():
+        return settings.GEMINI_MODEL
+    if settings.OPENAI_API_KEY.get_secret_value():
+        return settings.OPENAI_MODEL
+    return "local-bank"
+
+
 def _generate_json(instructions: str, prompt: str) -> dict:
     gemini_key = settings.GEMINI_API_KEY.get_secret_value()
     if gemini_key:

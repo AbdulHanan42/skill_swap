@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chatStore'
+import { useInterviewStore } from '@/stores/interviewStore'
 import { useMatchStore } from '@/stores/matchStore'
 
 const route = useRoute()
@@ -12,6 +13,7 @@ const router = useRouter()
 const auth = useAuthStore()
 const matchStore = useMatchStore()
 const chatStore = useChatStore()
+const interviewStore = useInterviewStore()
 const { isDarkMode, toggleTheme } = useTheme()
 
 const navItems = computed(() => [
@@ -20,7 +22,7 @@ const navItems = computed(() => [
   { label: 'Skill Matching', icon: 'swap', to: { name: 'skill-matching' } },
   { label: 'Swap Requests', icon: 'inbox', to: { name: 'swap-requests' }, count: matchStore.incomingCount },
   { label: 'Chat Room', icon: 'chat', to: { name: 'chat-room' }, count: chatStore.totalUnread },
-  { label: 'AI Interview', icon: 'gear' },
+  { label: 'AI Interview', icon: 'gear', to: { name: 'ai-interview' }, tag: interviewStore.sidebarTag },
   { label: 'Progress Tracking', icon: 'chart', to: { name: 'progress-tracking' } },
 ])
 
@@ -32,6 +34,7 @@ let inboxTimer = null
 function pollInbox() {
   matchStore.refresh()
   chatStore.refresh()
+  interviewStore.refresh()
 }
 
 onMounted(() => {
@@ -59,6 +62,7 @@ function handleLogout() {
   auth.logout()
   matchStore.reset()
   chatStore.reset()
+  interviewStore.reset()
   router.push({ name: 'auth' })
 }
 </script>
@@ -101,6 +105,13 @@ function handleLogout() {
               ? 'bg-[var(--accent-primary)] text-white'
               : 'bg-[var(--bg-base)] text-[var(--text-secondary)]'"
           >{{ item.count }}</span>
+          <span
+            v-if="item.tag"
+            class="rounded-full px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider"
+            :class="item.tag === 'ACTIVE'
+              ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]'
+              : 'bg-[var(--success-bg)] text-[var(--success-text)]'"
+          >{{ item.tag }}</span>
         </component>
       </nav>
 
@@ -188,6 +199,13 @@ function handleLogout() {
             v-if="item.count"
             class="rounded-full bg-[var(--accent-primary)] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
           >{{ item.count }}</span>
+          <span
+            v-if="item.tag"
+            class="rounded-full px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider"
+            :class="item.tag === 'ACTIVE'
+              ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]'
+              : 'bg-[var(--success-bg)] text-[var(--success-text)]'"
+          >{{ item.tag }}</span>
         </RouterLink>
       </nav>
 

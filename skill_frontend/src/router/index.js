@@ -43,6 +43,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/interview',
+      name: 'ai-interview',
+      component: () => import('@/views/AIInterviewView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/progress',
       name: 'progress-tracking',
       component: () => import('@/views/ProgressTrackingView.vue'),

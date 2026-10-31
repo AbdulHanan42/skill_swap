@@ -19,23 +19,11 @@ from app.schemas.match_schema import (
     SkillMasteryItem,
 )
 
+from app.services.grading import grade_for_score as _grade
+
 router = APIRouter(tags=["progress"])
 
 PROFICIENCY_BASELINE = {"Beginner": 35, "Intermediate": 65, "Expert": 90}
-
-
-def _grade(score: float) -> str:
-    if score >= 90:
-        return "A+"
-    if score >= 80:
-        return "A"
-    if score >= 70:
-        return "B"
-    if score >= 60:
-        return "C"
-    if score >= 50:
-        return "D"
-    return "E"
 
 
 def _completed_sessions(db: Session, user_id: int) -> list[tuple[LearningSession, Match]]:

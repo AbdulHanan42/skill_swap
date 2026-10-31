@@ -1,7 +1,4 @@
-import re
 from datetime import datetime, timezone
-from pathlib import Path
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
@@ -22,11 +19,10 @@ from app.schemas.chat_schema import (
 )
 from app.services.chat_manager import chat_manager
 from app.services.chat_payload import message_payload
+from app.services.uploads import display_name, read_capped, resolve_stored, save_upload
 
 router = APIRouter(tags=["chat"])
 
-CHUNK = 64 * 1024
-SAFE_SUFFIX = re.compile(r"[^a-z0-9]")
 # Anything outside this set is served as a download, never rendered by the browser.
 INLINE_TYPES = {
     "application/pdf",
@@ -142,16 +138,6 @@ def chat_unread(
     return ChatUnreadResponse(total=sum(_unread_counts(db, match_ids, current_user.id).values()))
 
 
-def _display_name(raw: str | None) -> str:
-    name = (raw or "").replace("\\", "/").split("/")[-1].strip() or "file"
-    return name[:200]
-
-
-def _stored_name(raw: str | None) -> str:
-    suffix = SAFE_SUFFIX.sub("", Path(_display_name(raw)).suffix.lower())[:12]
-    return f"{uuid4().hex}{suffix}"
-
-
 @router.post(
     "/chat/{match_id}/attachments",
     response_model=MessageResponse,
@@ -166,36 +152,17 @@ async def upload_attachment(
     current_user: User = Depends(get_current_user),
 ) -> Message:
     _get_room_or_404(db, match_id, current_user)
-    limit = settings.max_upload_bytes
     too_big = f"Files are limited to {settings.MAX_UPLOAD_MB} MB."
-
-    declared = request.headers.get("content-length", "")
-    if declared.isdigit() and int(declared) > limit + CHUNK:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_big)
-
-    chunks: list[bytes] = []
-    total = 0
-    while chunk := await file.read(CHUNK):
-        total += len(chunk)
-        if total > limit:
-            # The browser may lie about the size, so the cap is checked while reading.
-            raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, too_big)
-        chunks.append(chunk)
-    if total == 0:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "That file is empty.")
-
-    folder = settings.upload_root / "chat" / str(match_id)
-    folder.mkdir(parents=True, exist_ok=True)
-    stored = _stored_name(file.filename)
-    (folder / stored).write_bytes(b"".join(chunks))
+    data = await read_capped(file, request, settings.max_upload_bytes, too_big)
+    stored = save_upload(settings.upload_root, f"chat/{match_id}", file.filename, data)
 
     message = Message(
         match_id=match_id,
         sender_id=current_user.id,
         content=caption.strip()[:4000],
-        attachment_filename=_display_name(file.filename),
-        attachment_path=f"chat/{match_id}/{stored}",
-        attachment_size=total,
+        attachment_filename=display_name(file.filename),
+        attachment_path=stored,
+        attachment_size=len(data),
         attachment_mime=(file.content_type or "")[:255] or None,
     )
     db.add(message)
@@ -217,14 +184,9 @@ def download_attachment(
             status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
         )
     _get_room_or_404(db, message.match_id, current_user)
-    if not message.attachment_path:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
-        )
 
-    root = settings.upload_root
-    path = (root / message.attachment_path).resolve()
-    if not path.is_relative_to(root) or not path.is_file():
+    path = resolve_stored(settings.upload_root, message.attachment_path)
+    if path is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
         )
