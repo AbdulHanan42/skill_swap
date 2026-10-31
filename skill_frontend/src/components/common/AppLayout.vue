@@ -4,12 +4,14 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { useTheme } from '@/composables/useTheme'
 import { useAuthStore } from '@/stores/authStore'
+import { useChatStore } from '@/stores/chatStore'
 import { useMatchStore } from '@/stores/matchStore'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const matchStore = useMatchStore()
+const chatStore = useChatStore()
 const { isDarkMode, toggleTheme } = useTheme()
 
 const navItems = computed(() => [
@@ -17,7 +19,7 @@ const navItems = computed(() => [
   { label: 'Build Profile', icon: 'user', to: { name: 'build-profile' } },
   { label: 'Skill Matching', icon: 'swap', to: { name: 'skill-matching' } },
   { label: 'Swap Requests', icon: 'inbox', to: { name: 'swap-requests' }, count: matchStore.incomingCount },
-  { label: 'Chat Room', icon: 'chat', to: { name: 'chat-room' } },
+  { label: 'Chat Room', icon: 'chat', to: { name: 'chat-room' }, count: chatStore.totalUnread },
   { label: 'AI Interview', icon: 'gear' },
   { label: 'Progress Tracking', icon: 'chart', to: { name: 'progress-tracking' } },
 ])
@@ -29,6 +31,7 @@ let inboxTimer = null
 
 function pollInbox() {
   matchStore.refresh()
+  chatStore.refresh()
 }
 
 onMounted(() => {
@@ -37,6 +40,9 @@ onMounted(() => {
   }
   if (!matchStore.loadedOnce) {
     matchStore.loadInbox()
+  }
+  if (!chatStore.loadedOnce) {
+    chatStore.load()
   }
   inboxTimer = setInterval(pollInbox, 15000)
   document.addEventListener('visibilitychange', pollInbox)
@@ -52,6 +58,7 @@ watch(() => route.name, pollInbox)
 function handleLogout() {
   auth.logout()
   matchStore.reset()
+  chatStore.reset()
   router.push({ name: 'auth' })
 }
 </script>

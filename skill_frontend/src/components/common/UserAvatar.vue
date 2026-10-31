@@ -4,11 +4,12 @@ import { computed } from 'vue'
 const props = defineProps({
   name: { type: String, default: '' },
   src: { type: String, default: null },
-  size: { type: String, default: 'md' }, // sm | md | lg
+  size: { type: String, default: 'md' }, // sm | header | md | lg
 })
 
 const SIZES = {
   sm: 'h-8 w-8 text-[11px]',
+  header: 'h-10 w-10 text-sm',
   md: 'h-12 w-12 text-lg',
   lg: 'h-16 w-16 text-xl',
 }

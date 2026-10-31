@@ -33,3 +33,11 @@ export function formatHours(value) {
   const rounded = Math.round((Number(value) || 0) * 10) / 10
   return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)} hrs`
 }
+
+/** Conversation-list stamp: "4:09 PM" today, "Yesterday", "Oct 24" */
+export function formatChatStamp(iso) {
+  if (!iso) return ''
+  const day = formatDay(iso)
+  if (day !== 'Today') return day
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
