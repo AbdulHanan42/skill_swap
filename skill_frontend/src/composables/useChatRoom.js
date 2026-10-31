@@ -1,13 +1,14 @@
 import { onUnmounted, ref, watch } from 'vue'
 
 import { extractApiError, getToken, websocketUrl } from '@/api/client'
-import { fetchChatHistory } from '@/api/matchApi'
+import { fetchChatHistory } from '@/api/chatApi'
 
 /**
  * Live chat pipe for one match: REST history first, then WebSocket for new turns.
- * `getMatchId` is re-evaluated on change so the view can switch rooms in place.
+ * `getMatchId` is re-evaluated on change so the view can switch rooms in place,
+ * and `options.onMessage` lets the sidebar preview follow the conversation.
  */
-export function useChatRoom(getMatchId) {
+export function useChatRoom(getMatchId, options = {}) {
   const messages = ref([])
   const loading = ref(true)
   const error = ref('')
@@ -61,9 +62,9 @@ export function useChatRoom(getMatchId) {
         return
       }
       error.value = ''
-      if (!messages.value.some((item) => item.id === payload.id)) {
-        messages.value = [...messages.value, payload]
-      }
+      if (messages.value.some((item) => item.id === payload.id)) return
+      messages.value = [...messages.value, payload]
+      options.onMessage?.(currentId, payload)
     }
     socket.onclose = () => {
       connected.value = false
@@ -79,11 +80,26 @@ export function useChatRoom(getMatchId) {
     return true
   }
 
+  /** Add a message the caller already learned about over REST (uploads). */
+  function push(message) {
+    if (!message || message.match_id !== currentId) return
+    if (messages.value.some((item) => item.id === message.id)) return
+    messages.value = [...messages.value, message]
+  }
+
   watch(
     getMatchId,
     async (matchId) => {
-      if (!matchId || matchId === currentId) return
+      if (matchId === currentId) return
       currentId = matchId
+      if (!matchId) {
+        // Leaving every room must actually drop the socket, or the backend keeps
+        // treating this user as present and silently marks incoming mail read.
+        closeSocket()
+        messages.value = []
+        loading.value = false
+        return
+      }
       await loadHistory(matchId)
       connect()
     },
@@ -92,5 +108,5 @@ export function useChatRoom(getMatchId) {
 
   onUnmounted(closeSocket)
 
-  return { messages, loading, error, connected, disconnected, send, connect }
+  return { messages, loading, error, connected, disconnected, send, push, connect }
 }

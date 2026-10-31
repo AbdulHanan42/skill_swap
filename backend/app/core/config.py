@@ -31,6 +31,18 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: SecretStr = SecretStr("")
     GEMINI_MODEL: str = "gemini-3.8-flash"
 
+    UPLOAD_DIR: str = "uploads"
+    MAX_UPLOAD_MB: int = 5
+
+    @property
+    def upload_root(self) -> Path:
+        return (BACKEND_DIR / self.UPLOAD_DIR).resolve()
+
+    @property
+    def max_upload_bytes(self) -> int:
+        return self.MAX_UPLOAD_MB * 1024 * 1024
+
+
     @computed_field
     @property
     def cors_origin_list(self) -> list[str]:
