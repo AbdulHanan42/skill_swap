@@ -27,7 +27,3 @@ export function declineSwapRequest(matchId) {
 export function fetchMatchDetail(matchId) {
   return request(`/matches/${matchId}`)
 }
-
-export function fetchChatHistory(matchId, { page = 1, pageSize = 50 } = {}) {
-  return request(`/chat/${matchId}/history?page=${page}&page_size=${pageSize}`)
-}
